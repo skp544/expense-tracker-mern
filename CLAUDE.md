@@ -17,7 +17,7 @@ npm run seed      # populate MongoDB with 12 months of demo data (demo@example.c
 ### Frontend (`/frontend`)
 
 ```bash
-npm run dev       # Vite dev server on :5173
+npm run dev       # Vite dev server on :7002
 npm run build     # production build to dist/
 npm run preview   # preview production build locally
 ```
@@ -26,7 +26,7 @@ Both packages must be installed separately — there is no root-level package.js
 
 ## Architecture
 
-Two independent apps: `backend/` (Express API on :5000) and `frontend/` (React/Vite on :5173). Vite proxies `/api/*` and `/uploads/*` to `:5000` during development, so the frontend always calls relative paths like `/api/expenses`.
+Two independent apps: `backend/` (Express API on :7052) and `frontend/` (React/Vite on :7002). Vite proxies `/api/*` and `/uploads/*` to `:7052` during development, so the frontend always calls relative paths like `/api/expenses`.
 
 ### Backend structure
 
