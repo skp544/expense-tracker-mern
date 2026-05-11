@@ -25,6 +25,7 @@ app.use('/api/cards', require('./routes/cards'));
 app.use('/api/budgets', require('./routes/budgets'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/payment-accounts', require('./routes/paymentAccounts'));
+app.use('/api/transfers', require('./routes/transfers'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 

@@ -11,6 +11,7 @@ import Income from './pages/Income';
 import Analytics from './pages/Analytics';
 import Cards from './pages/Cards';
 import Budget from './pages/Budget';
+import Transfers from './pages/Transfers';
 import Settings from './pages/Settings';
 
 const ProtectedRoute = ({ children }) => {
@@ -45,6 +46,7 @@ const AppRoutes = () => (
       <Route path="/income" element={<Income />} />
       <Route path="/analytics" element={<Analytics />} />
       <Route path="/cards" element={<Cards />} />
+      <Route path="/transfers" element={<Transfers />} />
       <Route path="/budget" element={<Budget />} />
       <Route path="/settings" element={<Settings />} />
     </Route>

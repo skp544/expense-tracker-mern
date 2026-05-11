@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Receipt, TrendingUp, BarChart3,
-  CreditCard, PiggyBank, Settings, X, Zap, LogOut
+  CreditCard, PiggyBank, Settings, X, Zap, LogOut, ArrowLeftRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/income', icon: TrendingUp, label: 'Income' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/cards', icon: CreditCard, label: 'Cards & Accounts' },
+  { to: '/transfers', icon: ArrowLeftRight, label: 'Transfers' },
   { to: '/budget', icon: PiggyBank, label: 'Budget' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];

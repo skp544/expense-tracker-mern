@@ -42,6 +42,9 @@ export const PAYMENT_ACCOUNT_COLORS = {
 export const ACCOUNT_COLOR_OPTIONS = [
   '#6366f1', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#64748b',
 ];
+
+// account types eligible as transfer source/destination (no credit cards)
+export const TRANSFER_ELIGIBLE_TYPES = ['UPI', 'Debit Card', 'Net Banking', 'Wallet'];
 export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'SGD'];
 
 export const CATEGORY_COLORS = {
