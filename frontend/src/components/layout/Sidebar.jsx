@@ -11,7 +11,7 @@ const navItems = [
   { to: '/expenses', icon: Receipt, label: 'Expenses' },
   { to: '/income', icon: TrendingUp, label: 'Income' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/cards', icon: CreditCard, label: 'Credit Cards' },
+  { to: '/cards', icon: CreditCard, label: 'Cards & Accounts' },
   { to: '/budget', icon: PiggyBank, label: 'Budget' },
   { to: '/settings', icon: Settings, label: 'Settings' },
 ];

@@ -15,7 +15,7 @@ const expenseSchema = new mongoose.Schema({
   tags: [{ type: String, trim: true }],
   paymentMethod: {
     type: String,
-    enum: ['Cash', 'Credit Card', 'Debit Card', 'UPI', 'Net Banking', 'Wallet', 'Other'],
+    enum: ['Cash', 'Credit Card', 'Debit Card', 'UPI', 'Credit Card (UPI)', 'Net Banking', 'Wallet', 'Other'],
     default: 'Cash',
   },
   location: { type: String, maxlength: 100 },
@@ -27,6 +27,7 @@ const expenseSchema = new mongoose.Schema({
   },
   currency: { type: String, default: 'INR' },
   card: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', default: null },
+  paymentAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentAccount', default: null },
 }, { timestamps: true });
 
 expenseSchema.index({ user: 1, date: -1 });

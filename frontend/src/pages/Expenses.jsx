@@ -2,16 +2,24 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Plus, Search, Filter, Trash2, Edit2, Receipt, X, Upload } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, Receipt, Upload } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency, formatDate, formatDateInput, EXPENSE_CATEGORIES, PAYMENT_METHODS, CATEGORY_COLORS, CATEGORY_ICONS } from '../utils/helpers';
+import {
+  formatCurrency, formatDate, formatDateInput,
+  EXPENSE_CATEGORIES, PAYMENT_METHODS, CATEGORY_COLORS, CATEGORY_ICONS,
+} from '../utils/helpers';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { SkeletonRow } from '../components/ui/Skeleton';
 
-const defaultValues = { title: '', amount: '', category: 'Food', date: formatDateInput(new Date()), paymentMethod: 'Cash', notes: '', tags: '', location: '', isRecurring: false };
+const defaultValues = {
+  title: '', amount: '', category: 'Food',
+  date: formatDateInput(new Date()), paymentMethod: 'Cash',
+  paymentAccount: '', card: '',
+  notes: '', tags: '', location: '', isRecurring: false,
+};
 
 export default function Expenses() {
   const { user } = useAuth();
@@ -27,8 +35,18 @@ export default function Expenses() {
   const [saving, setSaving] = useState(false);
   const [filters, setFilters] = useState({ search: '', category: 'All', sortBy: 'date', order: 'desc' });
   const [cards, setCards] = useState([]);
+  const [paymentAccounts, setPaymentAccounts] = useState([]);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({ defaultValues });
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({ defaultValues });
+  const watchedPaymentMethod = watch('paymentMethod');
+
+  // accounts filtered to the currently selected payment method
+  const accountsForMethod = paymentAccounts.filter(a => a.type === watchedPaymentMethod);
+
+  // clear the account sub-selection when method changes
+  useEffect(() => {
+    setValue('paymentAccount', '');
+  }, [watchedPaymentMethod, setValue]);
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
@@ -45,18 +63,32 @@ export default function Expenses() {
 
   useEffect(() => { fetchExpenses(); }, [fetchExpenses]);
   useEffect(() => { api.get('/cards').then(r => setCards(r.data.data)).catch(() => {}); }, []);
+  useEffect(() => { api.get('/payment-accounts').then(r => setPaymentAccounts(r.data.data)).catch(() => {}); }, []);
 
   const openAdd = () => { setEditExpense(null); reset(defaultValues); setModalOpen(true); };
   const openEdit = (e) => {
     setEditExpense(e);
-    reset({ ...e, date: formatDateInput(e.date), tags: e.tags?.join(', ') || '', amount: e.amount.toString() });
+    reset({
+      ...e,
+      date: formatDateInput(e.date),
+      tags: e.tags?.join(', ') || '',
+      amount: e.amount.toString(),
+      card: e.card?._id || e.card || '',
+      paymentAccount: e.paymentAccount?._id || e.paymentAccount || '',
+    });
     setModalOpen(true);
   };
 
   const onSubmit = async (formData) => {
     setSaving(true);
     try {
-      const payload = { ...formData, amount: Number(formData.amount), tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [] };
+      const payload = {
+        ...formData,
+        amount: Number(formData.amount),
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+        card: formData.card || null,
+        paymentAccount: formData.paymentAccount || null,
+      };
       if (editExpense) {
         const { data } = await api.put(`/expenses/${editExpense._id}`, payload);
         setExpenses(prev => prev.map(e => e._id === editExpense._id ? data.data : e));
@@ -157,21 +189,28 @@ export default function Expenses() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ delay: i * 0.03 }}
-                className="flex items-center gap-4 p-4 border-b border-white/5 last:border-0 hover:bg-white/2 transition-all duration-200 group"
+                className="flex items-center gap-4 p-4 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-all duration-200 group"
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                  style={{ background: `${CATEGORY_COLORS[expense.category]}20` }}>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                  style={{ background: `${CATEGORY_COLORS[expense.category]}20` }}
+                >
                   {CATEGORY_ICONS[expense.category]}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">{expense.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="text-slate-500 text-xs">{formatDate(expense.date)}</span>
                     <span className="text-slate-700">·</span>
                     <span className="badge text-xs" style={{ background: `${CATEGORY_COLORS[expense.category]}15`, color: CATEGORY_COLORS[expense.category] }}>
                       {expense.category}
                     </span>
-                    {expense.paymentMethod !== 'Cash' && (
+                    {expense.paymentAccount ? (
+                      <span className="badge bg-white/5 text-xs flex items-center gap-1" style={{ color: expense.paymentAccount.color || '#94a3b8' }}>
+                        <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: expense.paymentAccount.color || '#6366f1' }} />
+                        {expense.paymentAccount.displayName}
+                      </span>
+                    ) : expense.paymentMethod !== 'Cash' && (
                       <span className="badge bg-white/5 text-slate-500 text-xs">{expense.paymentMethod}</span>
                     )}
                     {expense.isRecurring && <span className="badge bg-brand-500/10 text-brand-400 text-xs">Recurring</span>}
@@ -238,16 +277,35 @@ export default function Expenses() {
                 {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
+
+            {/* Account sub-selector — shown when saved accounts exist for selected method */}
+            {accountsForMethod.length > 0 && (
+              <div className="col-span-2">
+                <label className="label mb-1.5 block">Account</label>
+                <select {...register('paymentAccount')} className="input-field">
+                  <option value="">— No specific account —</option>
+                  {accountsForMethod.map(a => (
+                    <option key={a._id} value={a._id}>
+                      {a.displayName}{a.accountId ? ` (${a.accountId})` : ''}{a.bankName ? ` · ${a.bankName}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-slate-600 text-xs mt-1">
+                  Select an account or <button type="button" onClick={() => { setModalOpen(false); }} className="text-brand-400 hover:underline">manage accounts</button> in Cards & Accounts.
+                </p>
+              </div>
+            )}
+
             {cards.length > 0 && (
               <div>
-                <label className="label mb-1.5 block">Credit Card</label>
+                <label className="label mb-1.5 block">Credit Card (for billing)</label>
                 <select {...register('card')} className="input-field">
                   <option value="">None</option>
                   {cards.map(c => <option key={c._id} value={c._id}>{c.bankName} ••{c.cardNumber.slice(-4)}</option>)}
                 </select>
               </div>
             )}
-            <div>
+            <div className={cards.length > 0 ? '' : 'col-span-2'}>
               <label className="label mb-1.5 block">Location</label>
               <input {...register('location')} placeholder="Optional" className="input-field" />
             </div>

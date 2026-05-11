@@ -18,7 +18,8 @@ exports.getExpenses = async (req, res, next) => {
       .sort({ [sortBy]: order === 'desc' ? -1 : 1 })
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .populate('card', 'bankName cardNumber cardColor');
+      .populate('card', 'bankName cardNumber cardColor')
+      .populate('paymentAccount', 'displayName type bankName color');
 
     res.json({ success: true, count: expenses.length, total, pages: Math.ceil(total / limit), data: expenses });
   } catch (err) { next(err); }
@@ -84,7 +85,7 @@ exports.getExpenseStats = async (req, res, next) => {
         { $group: { _id: '$category', total: { $sum: '$amount' }, count: { $sum: 1 } } },
         { $sort: { total: -1 } },
       ]),
-      Expense.find({ user: req.user.id }).sort({ date: -1 }).limit(5).populate('card', 'bankName'),
+      Expense.find({ user: req.user.id }).sort({ date: -1 }).limit(5).populate('card', 'bankName').populate('paymentAccount', 'displayName type color'),
     ]);
 
     res.json({

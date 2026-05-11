@@ -30,7 +30,18 @@ export const getCardBrand = (num) => {
 
 export const EXPENSE_CATEGORIES = ['Food', 'Travel', 'Shopping', 'Bills', 'Entertainment', 'Health', 'Education', 'Investments', 'EMI', 'Others'];
 export const INCOME_SOURCES = ['Salary', 'Freelance', 'Investment', 'Business', 'Rental', 'Gift', 'Bonus', 'Other'];
-export const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'UPI', 'Net Banking', 'Wallet', 'Other'];
+export const PAYMENT_METHODS = ['Cash', 'Credit Card', 'Debit Card', 'UPI', 'Credit Card (UPI)', 'Net Banking', 'Wallet', 'Other'];
+export const PAYMENT_ACCOUNT_TYPES = ['UPI', 'Credit Card (UPI)', 'Debit Card', 'Net Banking', 'Wallet'];
+export const PAYMENT_ACCOUNT_COLORS = {
+  'UPI': '#8b5cf6',
+  'Credit Card (UPI)': '#6366f1',
+  'Debit Card': '#3b82f6',
+  'Net Banking': '#10b981',
+  'Wallet': '#f59e0b',
+};
+export const ACCOUNT_COLOR_OPTIONS = [
+  '#6366f1', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#64748b',
+];
 export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'SGD'];
 
 export const CATEGORY_COLORS = {
