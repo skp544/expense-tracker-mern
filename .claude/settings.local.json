@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"D:\\\\projects\\\\projects-2026\\\\expense-tracker-fullstack\\\\backend\\\\src\\\\config\")",
+      "Bash(mkdir -p \"D:\\\\projects\\\\projects-2026\\\\expense-tracker-fullstack\\\\backend\\\\src\\\\controllers\")",
+      "Bash(mkdir -p \"D:\\\\projects\\\\projects-2026\\\\expense-tracker-fullstack\\\\backend\\\\src\\\\middleware\")",
+      "Bash(mkdir -p \"D:\\\\projects\\\\projects-2026\\\\expense-tracker-fullstack\\\\backend\\\\src\\\\models\")",
+      "Bash(mkdir -p \"D:\\\\projects\\\\projects-2026\\\\expense-tracker-fullstack\\\\backend\\\\src\\\\routes\")",
+      "Bash(npm install *)"
+    ]
+  }
+}
