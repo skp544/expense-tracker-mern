@@ -16,7 +16,8 @@ exports.getIncome = async (req, res, next) => {
     const income = await Income.find(query)
       .sort({ [sortBy]: order === 'desc' ? -1 : 1 })
       .skip((page - 1) * limit)
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .populate('paymentAccount', 'displayName type bankName color');
 
     res.json({ success: true, count: income.length, total, pages: Math.ceil(total / limit), data: income });
   } catch (err) { next(err); }
@@ -53,7 +54,7 @@ exports.getIncomeStats = async (req, res, next) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const [monthlyTotal, sourceBreakdown] = await Promise.all([
+    const [monthlyTotal, sourceBreakdown, accountBreakdown] = await Promise.all([
       Income.aggregate([
         { $match: { user: req.user._id, date: { $gte: startOfMonth } } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
@@ -63,7 +64,15 @@ exports.getIncomeStats = async (req, res, next) => {
         { $group: { _id: '$source', total: { $sum: '$amount' }, count: { $sum: 1 } } },
         { $sort: { total: -1 } },
       ]),
+      Income.aggregate([
+        { $match: { user: req.user._id, date: { $gte: startOfMonth }, paymentAccount: { $ne: null } } },
+        { $group: { _id: '$paymentAccount', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        { $sort: { total: -1 } },
+        { $lookup: { from: 'paymentaccounts', localField: '_id', foreignField: '_id', as: 'acc' } },
+        { $unwind: { path: '$acc', preserveNullAndEmptyArrays: true } },
+        { $project: { total: 1, count: 1, name: '$acc.displayName', type: '$acc.type', color: '$acc.color' } },
+      ]),
     ]);
-    res.json({ success: true, data: { monthlyTotal: monthlyTotal[0]?.total || 0, sourceBreakdown } });
+    res.json({ success: true, data: { monthlyTotal: monthlyTotal[0]?.total || 0, sourceBreakdown, accountBreakdown } });
   } catch (err) { next(err); }
 };

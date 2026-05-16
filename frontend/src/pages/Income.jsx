@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Edit2, TrendingUp, ArrowUpRight } from 'lucide-react';
+import { Plus, Trash2, Edit2, TrendingUp, ArrowUpRight, Wallet } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, formatDateInput, INCOME_SOURCES, SOURCE_COLORS } from '../utils/helpers';
@@ -13,13 +13,14 @@ import { SkeletonRow, SkeletonCard } from '../components/ui/Skeleton';
 import DonutChart from '../components/charts/DonutChart';
 
 const sourceIcons = { Salary: '💼', Freelance: '💻', Investment: '📈', Business: '🏢', Rental: '🏠', Gift: '🎁', Bonus: '🎯', Other: '💰' };
-const defaultValues = { title: '', amount: '', source: 'Salary', date: formatDateInput(new Date()), notes: '', isRecurring: false, recurringFrequency: null };
+const defaultValues = { title: '', amount: '', source: 'Salary', date: formatDateInput(new Date()), notes: '', isRecurring: false, recurringFrequency: null, paymentAccount: '' };
 
 export default function Income() {
   const { user } = useAuth();
   const [income, setIncome] = useState([]);
   const [total, setTotal] = useState(0);
   const [stats, setStats] = useState(null);
+  const [paymentAccounts, setPaymentAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -31,6 +32,10 @@ export default function Income() {
   const [pages, setPages] = useState(1);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({ defaultValues });
+
+  useEffect(() => {
+    api.get('/payment-accounts').then(r => setPaymentAccounts(r.data.data)).catch(() => {});
+  }, []);
 
   const fetchIncome = useCallback(async () => {
     setLoading(true);
@@ -50,14 +55,14 @@ export default function Income() {
   const openAdd = () => { setEditItem(null); reset(defaultValues); setModalOpen(true); };
   const openEdit = (item) => {
     setEditItem(item);
-    reset({ ...item, date: formatDateInput(item.date), amount: item.amount.toString() });
+    reset({ ...item, date: formatDateInput(item.date), amount: item.amount.toString(), paymentAccount: item.paymentAccount?._id || '' });
     setModalOpen(true);
   };
 
   const onSubmit = async (formData) => {
     setSaving(true);
     try {
-      const payload = { ...formData, amount: Number(formData.amount) };
+      const payload = { ...formData, amount: Number(formData.amount), paymentAccount: formData.paymentAccount || null };
       if (editItem) {
         const { data } = await api.put(`/income/${editItem._id}`, payload);
         setIncome(prev => prev.map(i => i._id === editItem._id ? data.data : i));
@@ -152,9 +157,15 @@ export default function Income() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium truncate">{item.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-slate-500 text-xs">{formatDate(item.date)}</span>
                       <span className="badge text-xs" style={{ background: `${SOURCE_COLORS[item.source]}15`, color: SOURCE_COLORS[item.source] }}>{item.source}</span>
+                      {item.paymentAccount && (
+                        <span className="flex items-center gap-1 badge text-xs" style={{ background: `${item.paymentAccount.color}15`, color: item.paymentAccount.color }}>
+                          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.paymentAccount.color }} />
+                          {item.paymentAccount.displayName}
+                        </span>
+                      )}
                       {item.isRecurring && <span className="badge bg-brand-500/10 text-brand-400 text-xs">Recurring</span>}
                     </div>
                   </div>
@@ -179,26 +190,56 @@ export default function Income() {
           )}
         </div>
 
-        <div className="card">
-          <h3 className="section-title mb-4">By Source</h3>
-          {!loading && stats?.sourceBreakdown?.length ? (
-            <>
-              <DonutChart data={stats.sourceBreakdown} colors={stats.sourceBreakdown.map(s => SOURCE_COLORS[s._id] || '#6b7280')} />
-              <div className="space-y-2 mt-2">
-                {stats.sourceBreakdown.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ background: SOURCE_COLORS[s._id] || '#6b7280' }} />
-                      <span className="text-slate-400 text-xs">{s._id}</span>
+        <div className="space-y-5">
+          <div className="card">
+            <h3 className="section-title mb-4">By Source</h3>
+            {!loading && stats?.sourceBreakdown?.length ? (
+              <>
+                <DonutChart data={stats.sourceBreakdown} colors={stats.sourceBreakdown.map(s => SOURCE_COLORS[s._id] || '#6b7280')} />
+                <div className="space-y-2 mt-2">
+                  {stats.sourceBreakdown.map((s, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ background: SOURCE_COLORS[s._id] || '#6b7280' }} />
+                        <span className="text-slate-400 text-xs">{s._id}</span>
+                      </div>
+                      <span className="text-white text-xs font-medium">{formatCurrency(s.total, user?.currency)}</span>
                     </div>
-                    <span className="text-white text-xs font-medium">{formatCurrency(s.total, user?.currency)}</span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="h-40 flex items-center justify-center text-slate-600 text-sm">No data yet</div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="flex items-center gap-2 mb-4">
+              <Wallet size={14} className="text-slate-400" />
+              <h3 className="section-title">By Account</h3>
+            </div>
+            {!loading && stats?.accountBreakdown?.length ? (
+              <div className="space-y-2.5">
+                {stats.accountBreakdown.map((a, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: a.color || '#6366f1' }} />
+                      <div className="min-w-0">
+                        <p className="text-slate-300 text-xs font-medium truncate">{a.name}</p>
+                        <p className="text-slate-600 text-[10px]">{a.type} · {a.count} {a.count === 1 ? 'entry' : 'entries'}</p>
+                      </div>
+                    </div>
+                    <span className="text-emerald-400 text-xs font-semibold flex-shrink-0">{formatCurrency(a.total, user?.currency)}</span>
                   </div>
                 ))}
               </div>
-            </>
-          ) : (
-            <div className="h-40 flex items-center justify-center text-slate-600 text-sm">No data yet</div>
-          )}
+            ) : (
+              <div className="h-24 flex flex-col items-center justify-center gap-1 text-slate-600 text-xs text-center">
+                <Wallet size={20} className="text-slate-700 mb-1" />
+                Link accounts to income<br />to track here
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -222,6 +263,15 @@ export default function Income() {
             <label className="label mb-1.5 block">Source *</label>
             <select {...register('source')} className="input-field">
               {INCOME_SOURCES.map(s => <option key={s} value={s}>{sourceIcons[s]} {s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label mb-1.5 block">Received In Account</label>
+            <select {...register('paymentAccount')} className="input-field">
+              <option value="">— None / Cash —</option>
+              {paymentAccounts.map(a => (
+                <option key={a._id} value={a._id}>{a.displayName} ({a.type}{a.bankName ? ` · ${a.bankName}` : ''})</option>
+              ))}
             </select>
           </div>
           <div>

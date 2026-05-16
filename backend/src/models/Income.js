@@ -18,6 +18,7 @@ const incomeSchema = new mongoose.Schema({
     default: null,
   },
   currency: { type: String, default: 'INR' },
+  paymentAccount: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentAccount', default: null },
 }, { timestamps: true });
 
 incomeSchema.index({ user: 1, date: -1 });
